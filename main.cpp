@@ -13,7 +13,12 @@ int main(int argc, char* argv[])
     }
 
     CSV csv;
-    csv.load_from_file(argv[1]);
-    std::cout << csv << std::endl;
+    try {
+        csv.load_from_file(argv[1]);
+    } catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+    }
+    std::cout << "Well done\n";
+
     return 0;
 }

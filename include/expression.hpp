@@ -6,15 +6,23 @@
 #include <stdexcept>
 
 enum class Node_t { BINOP, EXPR, VARNAME, NUM, END };
-enum class BinOp_t { ADD, MUL, SUB, DIV };
+enum class BinOp_t { ADD, MUL, SUB, DIV, ASSIGN };
 
 class Node;
+class End;
 class Number;
 class Variable;
 class BinOp;
 class Expression;
 
 using VarValues = std::unordered_map<std::string, Number*>;
+
+class VariableNotFoundException: public std::runtime_error
+{
+public:
+    using std::runtime_error::runtime_error;
+    const char* varName() const { return what(); }
+};
 
 class Node {
     Node_t type;
@@ -24,6 +32,12 @@ public:
         : type (type) {};
     Node_t getType () const { return type; }
     virtual ~Node() = 0;
+};
+
+class End: public Node {
+public:
+    End(): Node(Node_t::END) {}
+    ~End() override = default;
 };
 
 class Number: public Node {
@@ -71,10 +85,9 @@ class Expression: public Node {
 
 public:
     Expression(): Node(Node_t::EXPR) { top = nullptr; };
-    Expression(std::vector<Node*>::iterator &cur_iter, VarValues& values);
+    Expression(std::vector<Node*>::iterator iter);
     int calculate(VarValues & values) const;
     Node_t getTopType() const { return top->getType(); }
-    void Dump() const;
     const Node* getTop() const { return top; }
 
     ~Expression() override { delete top; }
