@@ -69,8 +69,8 @@ Node* getLexem(const std::string& str, int& pos)
             auto res = new BinOp{BinOp_t::ASSIGN};
             return res;
         }
-        default:
-            throw std::invalid_argument("Unknown symbol: " + str[pos]);
+        default: 
+            throw std::invalid_argument(std::string{"getLexem: unknown symbol: \'"} + std::string{str[pos]} + "\'");
     }
     return nullptr;
 }
@@ -81,7 +81,7 @@ std::vector<Node*> lexer(const std::string& str)
     for (int cur_pos = 0; cur_pos <= str.size(); ++cur_pos) {
         Node * lexem = getLexem(str, cur_pos);
         if (lexem == nullptr) {
-            throw std::invalid_argument("unknown lexem in \""+str+"\"\n");
+            throw std::invalid_argument(std::string{"lexer: unknown lexem in ["} + str + "]");
         }
         lexems.push_back(lexem);
     }
@@ -144,8 +144,12 @@ void CSV::load_from_file(const std::string& filename)
         row_names.push_back(word);
         for (auto && key: col_names) {
             std::getline(ss, word, ',');
-            auto lexems = lexer(word);
-            columns[key].push_back(new Expression(lexems.begin()));
+            try {
+                auto lexems = lexer(word);
+                columns[key].push_back(new Expression(lexems.begin()));
+            } catch (std::exception& e) {
+                throw std::runtime_error(std::string{} + e.what() + " in cell " + key + row_names[row_names.size() - 1]);
+            }
         }
     }
 }
@@ -164,7 +168,7 @@ void CSV::process()
     // check cycles in dependecies
     auto graph = makeDependencyGraph();
     if (graph.isCyclic()) {
-        throw CalculationFail("CSV::process: There is an infinity recursion in table\n");
+        throw CalculationFail("CSV::process: There is an infinity recursion in table");
     }
 
     // process all the cells
@@ -183,7 +187,7 @@ void CSV::process()
         std::tie(col, row, node) = tuple;
 
         if (node->getType() != Node_t::EXPR) {
-            throw CalculationFail("CSV::process: non EXPR type in queue\n");
+            throw CalculationFail("CSV::process: non EXPR type in queue");
         }
         auto expr = static_cast<Expression*>(node);
         int res = 0;
@@ -195,6 +199,8 @@ void CSV::process()
             columns[col][rows[row]] = number;
         } catch(UnknownValue& e) {
             queue.push({col, row, node});
+        } catch(std::exception& e) {
+            throw std::runtime_error(std::string{} + e.what() + " in cell " + col + row);
         }
     }
 
@@ -225,7 +231,7 @@ void CSV::save(const std::string &filename)
 void CSV::save(std::ostream &os)
 {
     if (!is_complete) {
-        throw std::runtime_error("CSV::save: cannot save incomplete CSV, make sure CSV::process was invoked\n");
+        throw std::runtime_error("CSV::save: cannot save incomplete CSV, make sure CSV::process was invoked");
     }
     for (auto && col: col_names) {
         os << "," << col;

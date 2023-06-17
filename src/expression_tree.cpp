@@ -3,16 +3,18 @@
 Node* BuildTree (std::vector<Node *>::iterator &cur_iter) 
 {
     auto e_left = *(cur_iter);
-
-    if (e_left != nullptr) {
     
+    if (e_left != nullptr) {
+        if (e_left->getType() == Node_t::END) {
+            return e_left;
+        }
         // in case "-A1"
         if (e_left->getType() == Node_t::BINOP) {
             auto binop = static_cast<BinOp*>(e_left);
             if (binop->getOperation() == BinOp_t::SUB) {
                 auto rhs = *(++cur_iter);
                 if (rhs->getType() != Node_t::VARNAME && rhs->getType() != Node_t::NUM) {
-                    throw std::invalid_argument("Expected number or variable after \'-\'\n");
+                    throw std::invalid_argument("Expected number or variable after \'-\'");
                 }
                 binop->setRhs(rhs);
                 e_left = static_cast<Node *>(binop);
@@ -20,7 +22,7 @@ Node* BuildTree (std::vector<Node *>::iterator &cur_iter)
                 e_left = BuildTree(++cur_iter);
                 return e_left;
             } else {
-                throw std::invalid_argument("only \'-\' can be set before expression\n");
+                throw std::invalid_argument("only \'-\' or \'=\'can be set before the expression");
             }
         }
 
@@ -38,7 +40,7 @@ Node* BuildTree (std::vector<Node *>::iterator &cur_iter)
             Node* rhs = *(++cur_iter);
 
             if (rhs->getType() != Node_t::NUM && rhs->getType() != Node_t::VARNAME) {
-                throw std::invalid_argument("Expected variable or number after binary operation\n");
+                throw std::invalid_argument("Expected variable or number after binary operation");
             }
 
             binop->setRhs(rhs);
@@ -66,7 +68,7 @@ int TreeCalculator (const Node* top, VarValues & values)
         auto var = static_cast<const Variable*>(top);
         
         if (values.find(var->getName()) == values.end()) {
-            throw VariableNotFoundException("Unknown variable \""+var->getName()+"\"\n");
+            throw VariableNotFoundException(std::string{"TreeCalculator: unknown variable \""}+var->getName()+"\"");
         }
         
         if (values[var->getName()] == nullptr) {
@@ -103,5 +105,6 @@ int TreeCalculator (const Node* top, VarValues & values)
         return result;
     }
 
-    throw std::runtime_error("Something went wrong when calculating the expression\n");
+    // e.g. expression is empty
+    throw std::runtime_error("TreeCalculator: something went wrong when calculating the expression");
 }
