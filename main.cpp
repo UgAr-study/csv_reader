@@ -15,10 +15,10 @@ int main(int argc, char* argv[])
     CSV csv;
     try {
         csv.load_from_file(argv[1]);
+        csv.process();
+        csv.save(std::cout);
     } catch (std::exception& e) {
         std::cout << e.what() << std::endl;
     }
-    std::cout << "Well done\n";
-
     return 0;
 }

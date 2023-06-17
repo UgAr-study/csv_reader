@@ -14,15 +14,18 @@ class CalculationFail: public std::runtime_error
 
 class CSV
 {
+    bool is_complete = false;
+    std::vector<std::string> col_names;
+    std::vector<std::string> row_names;
     std::unordered_map<std::string, std::vector<Node*>> columns; // name of column: column values
     std::unordered_map<std::string, int> rows; // name of row: idx of element in columns
 public:
     CSV() {}
-    void load_from_file(std::string filename);
+    CSV(const std::string& filename) { load_from_file(filename); }
+    void load_from_file(const std::string& filename);
     void process();
+    void save(const std::string& filename);
+    void save(std::ostream& os);
 private:
-    DirectedGraph<std::string> makeDependencyGraph(const std::vector<std::string>& col_names,
-                                                   const std::vector<std::string>& row_names);
+    DirectedGraph<std::string> makeDependencyGraph();
 };
-
-std::ostream& operator<<(std::ostream & os, const CSV& csv);

@@ -1,5 +1,7 @@
 #include "csv.hpp"
 #include <sstream>
+#include <queue>
+#include <tuple>
 
 namespace 
 {
@@ -121,13 +123,10 @@ void getVariablesFromExpression(const Node* top, std::set<std::string>& variable
 
 } // anonymus namespace
 
-void CSV::load_from_file(std::string filename)
+void CSV::load_from_file(const std::string& filename)
 {
     std::ifstream file(filename);
     std::string line;
-    // column names
-    std::vector<std::string> col_names;
-    // std::vector<int> row_names;
     std::getline(file, line);
     std::stringstream ss(line);
     std::string word;
@@ -142,6 +141,7 @@ void CSV::load_from_file(std::string filename)
         ss = std::stringstream(line);
         std::getline(ss, word, ',');
         rows[word] = row_count++;
+        row_names.push_back(word);
         for (auto && key: col_names) {
             std::getline(ss, word, ',');
             auto lexems = lexer(word);
@@ -154,15 +154,6 @@ void CSV::load_from_file(std::string filename)
 void CSV::process()
 {
     VarValues values;
-    // get all column and row names
-    std::vector<std::string> col_names;
-    std::vector<std::string> row_names;
-    for (auto && kv: columns) {
-        col_names.push_back(kv.first);
-    }
-    for (auto && kv: rows) {
-        row_names.push_back(kv.first);
-    }
 
     for (auto && col: col_names) {
         for (auto && row: row_names) {
@@ -171,21 +162,46 @@ void CSV::process()
     }
 
     // check cycles in dependecies
-    auto graph = makeDependencyGraph(col_names, row_names);
+    auto graph = makeDependencyGraph();
     if (graph.isCyclic()) {
-        throw CalculationFail("There is an infinity recursion in table\n");
+        throw CalculationFail("CSV::process: There is an infinity recursion in table\n");
     }
 
     // process all the cells
+    std::queue<std::tuple<std::string,std::string,Node*>> queue; // element = {col_name, row_name, ptr to expression}
     for (auto && col: col_names) {
         for (auto && row: row_names) {
-            // TODO: process via queue
+            queue.push({col,row,columns[col][rows[row]]});
         }
     }
 
+    while(!queue.empty()) {
+        auto tuple = queue.front();
+        queue.pop();
+        std::string col, row; 
+        Node* node;
+        std::tie(col, row, node) = tuple;
+
+        if (node->getType() != Node_t::EXPR) {
+            throw CalculationFail("CSV::process: non EXPR type in queue\n");
+        }
+        auto expr = static_cast<Expression*>(node);
+        int res = 0;
+        try{
+            res = expr->calculate(values);
+            delete expr;
+            auto number = new Number(res);
+            values[col+row] = number;
+            columns[col][rows[row]] = number;
+        } catch(UnknownValue& e) {
+            queue.push({col, row, node});
+        }
+    }
+
+    is_complete = true; // now CSV contains only numbers
 }
 
-DirectedGraph<std::string> CSV::makeDependencyGraph(const std::vector<std::string>& col_names, const std::vector<std::string>& row_names)
+DirectedGraph<std::string> CSV::makeDependencyGraph()
 {
     DirectedGraph<std::string> graph;
     for (auto && col: col_names) {
@@ -200,9 +216,27 @@ DirectedGraph<std::string> CSV::makeDependencyGraph(const std::vector<std::strin
     return graph;
 }
 
-std::ostream& operator<<(std::ostream & os, const CSV& csv) {
-    //TODO
-    return os;
+void CSV::save(const std::string &filename)
+{
+    std::ofstream file(filename);
+    save(file);
 }
 
-
+void CSV::save(std::ostream &os)
+{
+    if (!is_complete) {
+        throw std::runtime_error("CSV::save: cannot save incomplete CSV, make sure CSV::process was invoked\n");
+    }
+    for (auto && col: col_names) {
+        os << "," << col;
+    }
+    os << std::endl;
+    for (auto && row: row_names) {
+        os << row;
+        for (auto && col: col_names) {
+            auto num = static_cast<Number*>(columns[col][rows[row]]);
+            os << "," << num->getNum();
+        }
+        os << std::endl;
+    }
+}

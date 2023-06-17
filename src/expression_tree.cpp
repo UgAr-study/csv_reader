@@ -1,5 +1,4 @@
 #include "expression_tree.hpp"
-#include "lexem.hpp"
 
 Node* BuildTree (std::vector<Node *>::iterator &cur_iter) 
 {
@@ -69,8 +68,12 @@ int TreeCalculator (const Node* top, VarValues & values)
         if (values.find(var->getName()) == values.end()) {
             throw VariableNotFoundException("Unknown variable \""+var->getName()+"\"\n");
         }
-        // TODO: check nullptr, cause it is possible
-        // return values[var->getName()]->getNum();
+        
+        if (values[var->getName()] == nullptr) {
+            throw UnknownValue();
+        }
+
+        return values[var->getName()]->getNum();
     }
 
 

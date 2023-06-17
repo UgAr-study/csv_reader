@@ -17,11 +17,15 @@ class Expression;
 
 using VarValues = std::unordered_map<std::string, Number*>;
 
+// thrown when variable with given name doesn't exist
 class VariableNotFoundException: public std::runtime_error
 {
 public:
     using std::runtime_error::runtime_error;
 };
+
+// thrown when variable value is not calculated yet
+class UnknownValue: public std::exception {};
 
 class Node {
     Node_t type;
