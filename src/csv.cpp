@@ -139,10 +139,15 @@ void CSV::load_from_file(const std::string& filename)
     int row_count = 0;
     while (std::getline(file, line)) {
         ss = std::stringstream(line);
+        word.clear();
         std::getline(ss, word, ',');
+        if (word.empty()) {
+            throw std::invalid_argument("CSV::load_from_file: empty row names are not supported");
+        }
         rows[word] = row_count++;
         row_names.push_back(word);
         for (auto && key: col_names) {
+            word.clear();
             std::getline(ss, word, ',');
             try {
                 auto lexems = lexer(word);

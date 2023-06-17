@@ -98,9 +98,13 @@ int TreeCalculator (const Node* top, VarValues & values)
             case BinOp_t::MUL:
                 result = left * right;
                 break;
-            case BinOp_t::DIV:
+            case BinOp_t::DIV: {
+                if (right == 0) {
+                    throw std::runtime_error("TreeCalculator: division by zero encountered");
+                }
                 result = left / right;
                 break;
+            }
         }
         return result;
     }
