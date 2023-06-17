@@ -9,6 +9,7 @@ add_executable(csv_manager
     src/csv.cpp
     src/expression.cpp
     src/expression_tree.cpp
+    src/graph.cpp
     )
 target_include_directories(csv_manager PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/include)

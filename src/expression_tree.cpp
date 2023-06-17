@@ -67,10 +67,10 @@ int TreeCalculator (const Node* top, VarValues & values)
         auto var = static_cast<const Variable*>(top);
         
         if (values.find(var->getName()) == values.end()) {
-            throw VariableNotFoundException(var->getName());
+            throw VariableNotFoundException("Unknown variable \""+var->getName()+"\"\n");
         }
-
-        return values[var->getName()]->getNum();
+        // TODO: check nullptr, cause it is possible
+        // return values[var->getName()]->getNum();
     }
 
 

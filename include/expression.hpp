@@ -21,7 +21,6 @@ class VariableNotFoundException: public std::runtime_error
 {
 public:
     using std::runtime_error::runtime_error;
-    const char* varName() const { return what(); }
 };
 
 class Node {
