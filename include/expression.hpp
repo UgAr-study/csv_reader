@@ -5,94 +5,113 @@
 #include <unordered_map>
 #include <stdexcept>
 
-enum class Node_t { BINOP, EXPR, VARNAME, NUM, END };
-enum class BinOp_t { ADD, MUL, SUB, DIV, ASSIGN };
+enum class Node_t
+{
+    BINOP,
+    EXPR,
+    VARNAME,
+    NUM,
+    END
+};
+enum class BinOp_t
+{
+    ADD,
+    MUL,
+    SUB,
+    DIV,
+    ASSIGN
+};
 
-class Node;
-class End;
 class Number;
-class Variable;
-class BinOp;
-class Expression;
 
-using VarValues = std::unordered_map<std::string, Number*>;
+using VarValues = std::unordered_map<std::string, Number *>;
 
 // thrown when variable with given name doesn't exist
-class VariableNotFoundException: public std::runtime_error
+class VariableNotFoundException : public std::runtime_error
 {
 public:
     using std::runtime_error::runtime_error;
 };
 
 // thrown when variable value is not calculated yet
-class UnknownValue: public std::exception {};
+class UnknownValue : public std::exception
+{
+};
 
-class Node {
+class Node
+{
     Node_t type;
 
 public:
-    Node (Node_t type)
-        : type (type) {};
-    Node_t getType () const { return type; }
+    Node(Node_t type)
+        : type(type){};
+    Node_t getType() const { return type; }
     virtual ~Node() = 0;
 };
 
-class End: public Node {
+class End : public Node
+{
 public:
-    End(): Node(Node_t::END) {}
+    End() : Node(Node_t::END) {}
     ~End() override = default;
 };
 
-class Number: public Node {
+class Number : public Node
+{
     int num;
 
 public:
     Number(int number)
-        : num (number), Node(Node_t::NUM) {};
-    int getNum () const { return num; }
+        : num(number), Node(Node_t::NUM){};
+    int getNum() const { return num; }
 
     ~Number() override = default;
 };
 
-class Variable: public Node {
+class Variable : public Node
+{
     std::string name;
 
 public:
     explicit Variable(std::string name)
-        : Node(Node_t::VARNAME), name(std::move(name)) {};
-    std::string getName () const { return name; }
+        : Node(Node_t::VARNAME), name(std::move(name)){};
+    std::string getName() const { return name; }
 
     ~Variable() override = default;
 };
 
-class BinOp: public Node {
+class BinOp : public Node
+{
     BinOp_t operation;
     Node *lhs = nullptr, *rhs = nullptr;
 
 public:
-    explicit BinOp (BinOp_t type)
-        : operation(type), Node(Node_t::BINOP) {};
+    explicit BinOp(BinOp_t type)
+        : Node(Node_t::BINOP), operation(type){};
 
     BinOp_t getOperation() const { return operation; }
-    void setLhs (Node* Lhs) { lhs = Lhs; }
-    void setRhs (Node* Rhs) { rhs = Rhs; }
-    const Node* getLhs() const { return lhs; }
-    const Node* getRhs() const { return rhs; }
+    void setLhs(Node *Lhs) { lhs = Lhs; }
+    void setRhs(Node *Rhs) { rhs = Rhs; }
+    const Node *getLhs() const { return lhs; }
+    const Node *getRhs() const { return rhs; }
 
-    ~BinOp() override { delete lhs; delete rhs; }
+    ~BinOp() override
+    {
+        delete lhs;
+        delete rhs;
+    }
 };
 
-
-class Expression: public Node {
-    Node* top;
+class Expression : public Node
+{
+    Node *top = nullptr;
 
 public:
-    Expression(): Node(Node_t::EXPR) { top = nullptr; };
-    Expression(std::vector<Node*>::iterator iter);
-    int calculate(VarValues & values) const;
+    Expression() : Node(Node_t::EXPR){};
+    Expression(std::vector<Node *>::iterator iter);
+    int calculate(VarValues &values) const;
     Node_t getTopType() const { return top->getType(); }
-    const Node* getTop() const { return top; }
+    const Node *getTop() const { return top; }
 
     ~Expression() override { delete top; }
-
 };

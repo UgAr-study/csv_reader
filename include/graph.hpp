@@ -5,40 +5,44 @@
 #include <set>
 
 template <typename Vertex>
-class DirectedGraph {
+class DirectedGraph
+{
     using visited_t = std::unordered_map<Vertex, bool>;
     using recursive_stack_t = std::unordered_map<Vertex, bool>;
 
-    mutable std::unordered_map<Vertex, std::vector<Vertex>> adj; // vertex and its adjacent nodes
-    mutable std::unordered_map<Vertex, bool> vertices; // all the vertices in graph
+    std::unordered_map<Vertex, std::vector<Vertex>> adj; // vertex and its adjacent nodes
+    std::unordered_map<Vertex, bool> vertices;           // all the vertices in graph
 public:
     DirectedGraph() {}
     // add directed edge from v to w
-    void addEdge(const Vertex& v, const Vertex& w);
-    bool isCyclic() const;
+    void addEdge(const Vertex &v, const Vertex &w);
+    bool isCyclic();
 
 private:
     // DFS function to find if a cycle exists
-    bool isCyclicUtil(const Vertex& v, visited_t& visited, recursive_stack_t& rs) const;
+    bool isCyclicUtil(const Vertex &v, visited_t &visited, recursive_stack_t &rs);
 };
 
 template <typename Vertex>
-void DirectedGraph<Vertex>::addEdge(const Vertex& v, const Vertex& w)
+void DirectedGraph<Vertex>::addEdge(const Vertex &v, const Vertex &w)
 {
-    if (adj.find(v) == adj.end()){
+    if (adj.find(v) == adj.end())
+    {
         adj[v] = std::vector<Vertex>{};
     }
-    if (vertices.find(v) == vertices.end()) {
+    if (vertices.find(v) == vertices.end())
+    {
         vertices[v] = false;
     }
-    if (vertices.find(w) == vertices.end()) {
+    if (vertices.find(w) == vertices.end())
+    {
         vertices[w] = false;
     }
     adj[v].push_back(w);
 }
 
 template <typename Vertex>
-bool DirectedGraph<Vertex>::isCyclic() const
+bool DirectedGraph<Vertex>::isCyclic()
 {
     // Mark all the vertices as not visited
     // and not part of recursion stack
@@ -46,31 +50,34 @@ bool DirectedGraph<Vertex>::isCyclic() const
     recursive_stack_t rs = vertices;
     // Call the recursive helper function
     // to detect cycle in different DFS trees
-    for (auto && vb: vertices) {
+    for (const auto &vb : vertices)
+    {
         auto i = vb.first;
         if (!visited[i] && isCyclicUtil(i, visited, rs))
             return true;
     }
- 
+
     return false;
 }
 
 template <typename Vertex>
-bool DirectedGraph<Vertex>::isCyclicUtil(const Vertex& v, visited_t &visited, recursive_stack_t &rs) const
+bool DirectedGraph<Vertex>::isCyclicUtil(const Vertex &v, visited_t &visited, recursive_stack_t &rs)
 {
-    if (visited[v] == false) {
+    if (visited[v] == false)
+    {
         // Mark the current node as visited
         // and part of recursion stack
         visited[v] = true;
         rs[v] = true;
- 
+
         // Recursive for all the vertices adjacent to this vertex
-        for (auto && i: adj[v]) {
+        for (auto &&i : adj[v])
+        {
             if ((!visited[i] && isCyclicUtil(i, visited, rs)) || rs[i])
                 return true;
         }
     }
- 
+
     // Remove the vertex from recursion stack
     rs[v] = false;
     return false;
